@@ -198,7 +198,6 @@ def McBotFaceLetsRoll():
 			if message: 
 				print(message)
 				send_text(config, message)
-				# exit()
 			else: 
 				new_trade.append(trade)
 			
