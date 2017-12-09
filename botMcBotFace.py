@@ -8,6 +8,8 @@ import sys
 import time
 import json 
 
+from collections import Counter
+
 import gdax
 
 filepath = os.path.abspath(os.path.dirname(__file__)) + "/"
@@ -34,6 +36,13 @@ public_client = gdax.PublicClient()
 def get_spot_price(crypto_currency, currency_code): 
 	try: 
 		return public_client.get_product_ticker(product_id=crypto_currency+'-'+currency_code)
+	except: 
+		None 
+
+def get_product_trades(crypto_currency, currency_code): 
+	try: 
+		_list = public_client.get_product_trades(product_id=crypto_currency+'-'+currency_code)
+		return Counter([x['side'] for x in _list])
 	except: 
 		None 
 
@@ -165,10 +174,11 @@ def McBotFaceLetsRoll():
 			try: 
 				spot = get_spot_price(crypto_currency, currency_code)
 				spot_price = float(spot["price"])
+				trades = get_product_trades(crypto_currency, currency_code)
 				if spot_price is None: continue 
 			except: 
 				continue
-			price_dict[crypto_currency] = spot_price
+			price_dict[crypto_currency] = {"price": spot_price, "trades": trades}
 			price_dict["time"] = spot[u'time']
 			if debug and count % print_interval == 0: 
 				print(trade)
