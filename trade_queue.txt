@@ -1,9 +1,14 @@
 # Sample file. Update as per your requirement.
-BTC, BUY, <, 12000, 300
+BTC, BUY, <, 14000, 200
+BTC, BUY, <, 13000, 200
+BTC, BUY, <, 12000, 200
 ETH, BUY, <, 450, 200
+ETH, BUY, <, 400, 200
 BTC, BUY, <, 10000, 500
 LTC, BUY, <=, 130, 200
 LTC, BUY, <=, 100, 300
+LTC, BUY, <=, 70, 200
+LTC, BUY, <=, 50, 300
 
 #LTC, BUY, <=, 170, 200
 #LTC, BUY, <=, 200, 200

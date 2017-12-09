@@ -26,7 +26,7 @@ gte_or_lte = ["<", ">", "<=", ">="]
 
 debug = False 
 
-# # coinbase params 
+# coinbase params 
 currency_code = 'USD' 
 
 public_client = gdax.PublicClient()
@@ -169,11 +169,12 @@ def McBotFaceLetsRoll():
 			except: 
 				continue
 			price_dict[crypto_currency] = spot_price
+			price_dict["time"] = spot[u'time']
 			if debug and count % print_interval == 0: 
 				print(trade)
 				print("Spot price:", spot_price)
 				print("")
-				# print(spot)
+				print(spot)
 			
 			message = match_trade_criteria(trade, spot_price)
 			if message: 
@@ -192,4 +193,3 @@ def McBotFaceLetsRoll():
 if __name__ == "__main__": 
 	McBotFaceLetsRoll()
 	
-	# send_text(config)
