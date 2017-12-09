@@ -175,6 +175,9 @@ def McBotFaceLetsRoll():
 		new_trade = []
 		for trade in trade_queue: 
 			crypto_currency = trade[reverse_index["currency"]]
+			if not crypto_currency in accepted_currencies: 
+				new_trade.append(trade)
+				continue
 			if not crypto_currency in outfile: 
 				outfile[crypto_currency] = open(price_history_dir + crypto_currency, "a")
 			try: 
@@ -182,8 +185,11 @@ def McBotFaceLetsRoll():
 				spot = get_spot_price(crypto_currency, currency_code)
 				spot_price = float(spot["price"])
 				trades = get_product_trades(crypto_currency, currency_code)
-				if spot_price is None: continue 
+				if spot_price is None: 
+					new_trade.append(trade)
+					continue 
 			except: 
+				new_trade.append(trade)
 				continue
 			outfile[crypto_currency].write(json.dumps(spot)+ "\t" + json.dumps(trades) + "\n")
 			price_dict[crypto_currency] = {"price": spot_price, "trades": trades}
