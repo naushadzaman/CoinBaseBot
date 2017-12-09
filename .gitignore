@@ -2,3 +2,5 @@ config
 *.pyc
 venv
 pricehistory/*
+trade_queue.txt
+

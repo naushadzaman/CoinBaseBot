@@ -55,7 +55,6 @@ pip install -r requirements.txt
 
 
 ## Next ToDO
-* As soon as send the notification, remove it from trade queue and add it in history file, which is appended. 
 * Predict crypto currency price from other ones, e.g. predict Litecoin price from Bitcoin and Litecoin historic + ETH current and historic + gold current and historic
 * If the price is in free falling or continuous upwards 
 * Get recent transactions to get a sense of what's going on 

@@ -15,6 +15,7 @@ import gdax
 filepath = os.path.abspath(os.path.dirname(__file__)) + "/"
 
 # define files, change names here. 
+price_history_dir = filepath+"pricehistory/"
 trade_file = filepath + "trade_queue.txt"
 history_file = filepath + "history.txt"
 config_file = filepath + "config"
@@ -24,7 +25,7 @@ index = {0:"currency", 1:"action", 2:"gte_or_lte", 3:"target", 4:"budget"}
 reverse_index = {index[x]:x for x in index}
 accepted_currencies = ["BTC", "ETH", "LTC"]
 accepted_actions = ["BUY", "SELL"]
-gte_or_lte = ["<", ">", "<=", ">="]
+gte_or_lte = ["<", ">", "<=", ">=", "gte", "lte"]
 
 debug = False 
 
@@ -106,9 +107,9 @@ def read_trade_line(line):
 		found_error = "does not contain proper gte / lte operations" 
 
 	try: 
-		if line_split[reverse_index["gte_or_lte"]] in ["<", '<=']: 
+		if line_split[reverse_index["gte_or_lte"]] in ["<", '<=', 'lte']: 
 			line_split[reverse_index["gte_or_lte"]] = "lte"
-		elif line_split[reverse_index["gte_or_lte"]] in [">", '>=']: 
+		elif line_split[reverse_index["gte_or_lte"]] in [">", '>=', 'gte']: 
 			line_split[reverse_index["gte_or_lte"]] = "gte"
 
 		line_split[reverse_index["target"]] = float(line_split[reverse_index["target"]])
@@ -171,19 +172,20 @@ def McBotFaceLetsRoll():
 	# if True: 
 		price_dict = {}
 		trade_queue = get_trade_queue(trade_file)
+		new_trade = []
 		for trade in trade_queue: 
 			crypto_currency = trade[reverse_index["currency"]]
 			if not crypto_currency in outfile: 
-				outfile[crypto_currency] = open(filepath+"pricehistory/"+crypto_currency, "a")
+				outfile[crypto_currency] = open(price_history_dir + crypto_currency, "a")
 			try: 
 			# if True: 
 				spot = get_spot_price(crypto_currency, currency_code)
 				spot_price = float(spot["price"])
 				trades = get_product_trades(crypto_currency, currency_code)
 				if spot_price is None: continue 
-				outfile[crypto_currency].write(json.dumps(spot)+ "\t" + json.dumps(trades) + "\n")
 			except: 
 				continue
+			outfile[crypto_currency].write(json.dumps(spot)+ "\t" + json.dumps(trades) + "\n")
 			price_dict[crypto_currency] = {"price": spot_price, "trades": trades}
 			price_dict["time"] = spot[u'time']
 			if debug and count % print_interval == 0: 
@@ -196,7 +198,9 @@ def McBotFaceLetsRoll():
 			if message: 
 				print(message)
 				send_text(config, message)
-				exit()
+				# exit()
+			else: 
+				new_trade.append(trade)
 			
 		time.sleep(time_sleep)
 		spot = get_spot_price(crypto_currency, currency_code)
@@ -205,6 +209,11 @@ def McBotFaceLetsRoll():
 			print(json.dumps(price_dict, indent=3))
 
 		count += 1 
+		trade_file_out = open(trade_file, "w")
+		for trade in new_trade: 
+			trade_file_out.write(",".join([str(x) for x in trade]) + "\n")
+		trade_file_out.close() 
+
 
 	for each in outfile:
 		outfile[each].close()
