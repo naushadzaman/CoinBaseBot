@@ -15,7 +15,7 @@ filepath = os.path.abspath(os.path.dirname(__file__)) + "/"
 # define files, change names here. 
 trade_file = filepath + "trade_queue.txt"
 history_file = filepath + "history.txt"
-
+config_file = filepath + "config"
 
 # index, mappings, accepted variables 
 index = {0:"currency", 1:"action", 2:"gte_or_lte", 3:"target", 4:"budget"}
@@ -23,6 +23,8 @@ reverse_index = {index[x]:x for x in index}
 accepted_currencies = ["BTC", "ETH", "LTC"]
 accepted_actions = ["BUY", "SELL"]
 gte_or_lte = ["<", ">", "<=", ">="]
+
+debug = False 
 
 # # coinbase params 
 currency_code = 'USD' 
@@ -36,15 +38,42 @@ def get_spot_price(crypto_currency, currency_code):
 		None 
 
 
-# def load_config(config_file): 
-# 	config_text = open(config_file).read().strip().split("\n")
-# 	config = {"Key":config_text[0].split(":")[1].strip(), "Secret":config_text[1].split(":")[1].strip()}
-# 	return config
+def get_config_line_info(line): 
+	return ":".join(line.split(":")[1:]).strip()
 
-# def get_client(): 
-# 	config = load_config(config_file)
-# 	client = Client(config["Key"], config["Secret"])
-# 	return client
+
+def load_config(config_file): 
+	config_text = open(config_file).read().strip().split("\n")
+	config = {"coinbase":{
+		"Key":get_config_line_info(config_text[0]), 
+		"Secret":get_config_line_info(config_text[1])
+		},
+		"twilio":
+		{
+		"Key":get_config_line_info(config_text[2]), 
+		"Secret":get_config_line_info(config_text[3]),
+		"Message":get_config_line_info(config_text[4]),
+		"Param1":get_config_line_info(config_text[5]),
+		"Param2":get_config_line_info(config_text[6]),
+		}
+	}
+	return config
+
+
+def send_text(config, message): 
+	# curl1 = "curl 'https://api.twilio.com/2010-04-01/Accounts/AC312e5fddb054379c65c099339db9d102/Messages.json' -X POST --data-urlencode 'To=+15857481778' --data-urlencode 'From=+15859783469' --data-urlencode 'Body=Buy LTC' -u AC312e5fddb054379c65c099339db9d102:61246dd6050fac4570e1abeaed5c68e1"
+	# message = "Buy LTC"
+	curl2 = "curl '"+ config["twilio"]["Message"] + config["twilio"]["Param1"] + message + config["twilio"]["Param2"]
+	# print(curl1)
+	print(curl2)
+	# if(curl1 == curl2): 
+	os.system(curl2)
+
+
+def get_client(): 
+	config = load_config(config_file)
+	client = Client(config["coinbase"]["Key"], config["coinbase"]["Secret"])
+	return client
 
 def read_trade_line(line): 
 	line_split = [x.strip() for x in line.split(",")]
@@ -79,10 +108,11 @@ def read_trade_line(line):
 		found_error = True 
 
 	if found_error: 
-		print("Line error:", line)
-		print(found_error)
-		print("Expected format: currency, action, gte_or_lte, targer, budget")
-		print("\n")
+		if debug: 
+			print("Line error:", line)
+			print(found_error)
+			print("Expected format: currency, action, gte_or_lte, targer, budget")
+			print("\n")
 		return None 
 
 	return line_split
@@ -90,11 +120,13 @@ def read_trade_line(line):
 
 def get_trade_queue(trade_file): 
 	trade_queue = []
-	for line in open(trade_file): 
+	file = open(trade_file)
+	for line in file: 
 		line = line.strip() 
 		trade = read_trade_line(line)
 		if not trade is None: 
 			trade_queue.append(trade)
+	file.close()
 	return trade_queue
 
 
@@ -117,26 +149,47 @@ def match_trade_criteria(trade, spot_price):
 
 
 def McBotFaceLetsRoll(): 
+	config = load_config(config_file)
 	# client = get_client()
 	# print(json.dumps(config, indent=3))
-	# while True:
-	if True: 
+	count = 0 
+	time_sleep = 3
+	print_interval = 10
+	
+	while True:
+	# if True: 
+		price_dict = {}
 		trade_queue = get_trade_queue(trade_file)
 		for trade in trade_queue: 
 			crypto_currency = trade[reverse_index["currency"]]
-			spot = get_spot_price(crypto_currency, currency_code)
-			spot_price = float(spot["price"])
-			if spot_price is None: continue 
-			print(trade)
-			print("Spot price:", spot_price)
-			print(spot)
+			try: 
+				spot = get_spot_price(crypto_currency, currency_code)
+				spot_price = float(spot["price"])
+				if spot_price is None: continue 
+			except: 
+				continue
+			price_dict[crypto_currency] = spot_price
+			if debug and count % print_interval == 0: 
+				print(trade)
+				print("Spot price:", spot_price)
+				print("")
+				# print(spot)
+			
 			message = match_trade_criteria(trade, spot_price)
 			if message: 
 				print(message)
-			print("")
+				send_text(config, message)
+				exit()
+			
+		time.sleep(time_sleep)
+		spot = get_spot_price(crypto_currency, currency_code)
 
+		if count % print_interval == 0: 
+			print(json.dumps(price_dict, indent=3))
 
-
-
+		count += 1 
+		
 if __name__ == "__main__": 
 	McBotFaceLetsRoll()
+	
+	# send_text(config)
