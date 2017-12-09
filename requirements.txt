@@ -1,0 +1,4 @@
+gdax
+pyopenssl 
+ndg-httpsclient 
+pyasn1
