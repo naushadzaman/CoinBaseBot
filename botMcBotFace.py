@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+# https://github.com/danpaquin/gdax-python
+
 __author__      = "Naushad UzZaman (@naushadzaman)"
 
 import os 
@@ -18,7 +20,8 @@ filepath = os.path.abspath(os.path.dirname(__file__)) + "/"
 price_history_dir = filepath+"pricehistory/"
 trade_file = filepath + "trade_queue.txt"
 history_file = filepath + "history.txt"
-config_file = filepath + "config"
+import config 
+config = config.config
 
 # index, mappings, accepted variables 
 index = {0:"currency", 1:"action", 2:"gte_or_lte", 3:"target", 4:"budget"}
@@ -38,50 +41,43 @@ def get_spot_price(crypto_currency, currency_code):
 	try: 
 		return public_client.get_product_ticker(product_id=crypto_currency+'-'+currency_code)
 	except: 
-		None 
+		return None 
 
 def get_product_trades(crypto_currency, currency_code): 
 	try: 
 		_list = public_client.get_product_trades(product_id=crypto_currency+'-'+currency_code)
 		return Counter([x['side'] for x in _list])
 	except: 
-		None 
+		return None 
+
+def get_historical_price(crypto_currency, currency_code, granularity=24*60*60):
+	try:
+		history = public_client.get_product_historic_rates(product_id=crypto_currency+'-'+currency_code, granularity=granularity)
+		return history
+	except: 
+		return None 
 
 
 def get_config_line_info(line): 
 	return ":".join(line.split(":")[1:]).strip()
 
 
-def load_config(config_file): 
-	config_text = open(config_file).read().strip().split("\n")
-	config = {"coinbase":{
-		"Key":get_config_line_info(config_text[0]), 
-		"Secret":get_config_line_info(config_text[1])
-		},
-		"twilio":
-		{
-		"Key":get_config_line_info(config_text[2]), 
-		"Secret":get_config_line_info(config_text[3]),
-		"Message":get_config_line_info(config_text[4]),
-		"Param1":get_config_line_info(config_text[5]),
-		"Param2":get_config_line_info(config_text[6]),
-		}
-	}
-	return config
-
 
 def send_text(config, message): 
 	# curl1 = "curl 'https://api.twilio.com/2010-04-01/Accounts/AC312e5fddb054379c65c099339db9d102/Messages.json' -X POST --data-urlencode 'To=+15857481778' --data-urlencode 'From=+15859783469' --data-urlencode 'Body=Buy LTC' -u AC312e5fddb054379c65c099339db9d102:61246dd6050fac4570e1abeaed5c68e1"
 	# message = "Buy LTC"
-	curl2 = "curl '"+ config["twilio"]["Message"] + config["twilio"]["Param1"] + message + config["twilio"]["Param2"]
-	# print(curl1)
-	print(curl2)
-	# if(curl1 == curl2): 
-	os.system(curl2)
+	for to_number in config["twilio"]["to_list"]:
+		curl2 = "curl 'https://api.twilio.com/2010-04-01/Accounts/"+ config["twilio"]["Secret"]+"/Messages.json' -X POST --data-urlencode 'To=" + to_number + "' --data-urlencode 'From="+ config["twilio"]["from"] + "' --data-urlencode 'Body=" + message + "' -u " + config["twilio"]["Secret"] + ":" + config["twilio"]["Key"] 
+		# print(curl1)
+		print(curl2)
+		# if(curl1 == curl2): 
+		# 	print("matched")
+		# else: 
+		# 	print("didn't match")
+		os.system(curl2)
 
 
 def get_client(): 
-	config = load_config(config_file)
 	client = Client(config["coinbase"]["Key"], config["coinbase"]["Secret"])
 	return client
 
@@ -159,9 +155,7 @@ def match_trade_criteria(trade, spot_price):
 
 
 def McBotFaceLetsRoll(): 
-	config = load_config(config_file)
-	# client = get_client()
-	# print(json.dumps(config, indent=3))
+
 	count = 0 
 	time_sleep = 3
 	print_interval = 10
@@ -208,8 +202,7 @@ def McBotFaceLetsRoll():
 				new_trade.append(trade)
 			
 		time.sleep(time_sleep)
-		spot = get_spot_price(crypto_currency, currency_code)
-
+		
 		if count % print_interval == 0: 
 			print(json.dumps(price_dict, indent=3))
 

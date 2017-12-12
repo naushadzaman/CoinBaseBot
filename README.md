@@ -3,6 +3,7 @@ Send notification to Buy / Sell on CoinBase for Bitcoin (BTC) / Ethereum (ETH) /
 
 Algorithmic trading of Crypto currencies - Bitcoin, Ethereum and Litecoin. 
 
+I might not end up updating this repo anymore. Please follow @daycoining if you are interested. 
 
 Provided under MIT License by Naushad UzZaman.
 
@@ -31,7 +32,7 @@ ETC, SELL, >, 600, 50
 
 ## Create config file 
 ```
-$ cp sample_config config 
+$ cp sample_config.py config.py
 ```
 
 * Enable API Key here: https://coinbase.com/settings/api
@@ -41,13 +42,22 @@ Not using coinbase API yet.
 Twilio python API was giving some stupid error, like number not valid. Didn't have the patience to debug it through. Hacky way to handle it with curl. Update Token, SID, Message url and parameters appropriately to get notification. Otherwise comment out send_text request. 
 
 ```
-API Key: afkefmwipwiwigjwpig
-API Secret: amfemgijrgirgs
-Twilio Token: 39493389hdfudjfa
-Twilio SID: AeFEvEEE35353535315kfa
-Twilio Message: https://api.twilio.com/2010-04-01/Accounts/AeFEvEEE35353535315kfa/Messages.json
-Twilio Param1: ' -X POST --data-urlencode 'To=+12223334444' --data-urlencode 'From=+12223334444' --data-urlencode 'Body=
-Twilio Param2: ' -u AeFEvEEE35353535315kfa:39493389hdfudjfa
+config = {
+	"coinbase":{
+		"Key": "",
+		"Secret": ""
+	},
+	"twilio":{
+		"Key": "",
+		"Secret": "",
+		"from": "+12223334444",		
+		"to_list": ["+12223334444"],
+	},
+	"bittrex":{
+		"Key" : "",
+		"Secret" : ""
+	}
+}  
 ```
 
 ## Installation 
